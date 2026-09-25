@@ -1,0 +1,14 @@
+/* Design-system tokens (verbatim from the Okwe Knowledge design system) and
+   site rules first; Tailwind runs with preflight disabled so base.css is the
+   reset. Vite inlines these local imports before PostCSS runs. */
+@import './styles/tokens/colors.css';
+@import './styles/tokens/typography.css';
+@import './styles/tokens/spacing.css';
+@import './styles/tokens/elevation.css';
+@import './styles/tokens/motion.css';
+@import './styles/tokens/base.css';
+@import './styles/site.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

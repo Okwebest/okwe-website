@@ -1,0 +1,114 @@
+:root{
+/* ---- Ink: the institutional ground. Cool, near-black, slightly blue. ---- */
+--ink-900:#0A1014;--ink-800:#101A21;--ink-700:#1B2A33;--ink-600:#2C3F4A;--ink-500:#47606C;--ink-400:#6E8794;--ink-300:#9CB0BA;--ink-200:#C6D2D8;--ink-100:#E3E9EC;
+/* ---- Bone: warm paper. Never pure white. ---- */
+--bone-50:#FBFAF6;--bone-100:#F4F1EA;--bone-200:#E9E4D9;--bone-300:#D9D2C4;--bone-400:#BFB6A4;
+/* ---- Persimmon: the signature colour. One per surface, never decorative. ---- */
+--persimmon-700:#8F2B17;--persimmon-600:#B3391F;--persimmon-500:#C8442A;--persimmon-400:#DE6A4F;--persimmon-200:#F1C9BF;--persimmon-100:#F9E4DE;
+/* ---- Lagoon: systems, diagrams, second data series. ---- */
+--lagoon-700:#0C3F3D;--lagoon-600:#125B58;--lagoon-500:#1C7C77;--lagoon-300:#6FB0AB;--lagoon-100:#DCEDEB;
+/* ---- Brass: third data series, seed/counter motif, print flourish. ---- */
+--brass-700:#8A6317;--brass-600:#A87C1F;--brass-500:#C8952F;--brass-300:#E0BE72;--brass-200:#EFE0BC;
+/* ---- Slate blue: informational only. Deliberately quiet. ---- */
+--slate-600:#24537F;--slate-100:#DEE8F2;
+
+/* ---- Semantic surfaces ---- */
+--surface-page:var(--bone-100);
+--surface-card:var(--bone-50);
+--surface-inset:var(--bone-200);
+--surface-ink:var(--ink-900);
+--surface-ink-soft:var(--ink-800);
+--surface-accent:var(--persimmon-500);
+--surface-accent-soft:var(--persimmon-100);
+--surface-data:var(--lagoon-100);
+
+/* ---- Semantic text ---- */
+--text-display:var(--ink-900);
+--text-body:var(--ink-800);
+--text-secondary:var(--ink-600);
+--text-muted:var(--ink-500);
+--text-inverse:var(--bone-50);
+--text-inverse-muted:var(--ink-300);
+--text-accent:var(--persimmon-600);
+--text-link:var(--persimmon-600);
+--text-link-hover:var(--persimmon-700);
+
+/* ---- Lines. The brand runs on hairlines, not shadows. ---- */
+--border-hairline:#D9D2C4;
+--border-hairline-ink:rgba(10,16,20,.12);
+--border-strong:var(--ink-900);
+--border-inverse:rgba(251,250,246,.22);
+--rule-weight:1px;
+--rule-weight-strong:2px;
+
+/* ---- Interactive ---- */
+--interactive-bg:var(--ink-900);
+--interactive-bg-hover:var(--ink-700);
+--interactive-bg-active:var(--ink-800);
+--interactive-fg:var(--bone-50);
+--interactive-accent:var(--persimmon-600);
+--interactive-accent-hover:var(--persimmon-700);
+--interactive-quiet-hover:rgba(10,16,20,.06);
+--interactive-quiet-active:rgba(10,16,20,.11);
+--interactive-disabled-bg:var(--bone-300);
+--interactive-disabled-fg:var(--ink-400);
+--focus-ring:var(--lagoon-600);
+--focus-ring-width:2px;
+--focus-ring-offset:2px;
+--selection-bg:var(--persimmon-200);
+
+/* ---- Status ---- */
+--status-success:var(--lagoon-600);--status-success-soft:var(--lagoon-100);
+--status-warning:var(--brass-600);--status-warning-soft:var(--brass-200);
+--status-danger:var(--persimmon-600);--status-danger-soft:var(--persimmon-100);
+--status-info:var(--slate-600);--status-info-soft:var(--slate-100);
+
+/* ---- Editorial roles ---- */
+--fact:var(--lagoon-600);       /* verified, sourced */
+--interpretation:var(--brass-600); /* our reading of evidence */
+--opinion:var(--persimmon-600);  /* our view */
+--unknown:var(--ink-400);        /* what we don't know */
+
+/* ---- Data visualisation, in series order ---- */
+--data-1:var(--ink-800);--data-2:var(--persimmon-500);--data-3:var(--lagoon-600);--data-4:var(--brass-500);--data-5:var(--ink-400);--data-6:var(--lagoon-300);
+--data-grid:rgba(10,16,20,.10);
+--data-zero:var(--ink-600);
+}
+
+/* Dark mode = ink ground. Used for video graphics, title cards, dark web views. */
+[data-theme="dark"]{
+--surface-page:var(--ink-900);
+--surface-card:var(--ink-800);
+--surface-inset:var(--ink-700);
+--surface-ink:var(--ink-900);
+--surface-ink-soft:var(--ink-800);
+--surface-accent:var(--persimmon-500);
+--surface-accent-soft:rgba(200,68,42,.18);
+--surface-data:rgba(28,124,119,.20);
+--text-display:var(--bone-50);
+--text-body:var(--bone-100);
+--text-secondary:var(--ink-200);
+--text-muted:var(--ink-300);
+--text-inverse:var(--ink-900);
+--text-inverse-muted:var(--ink-600);
+--text-accent:var(--persimmon-400);
+--text-link:var(--persimmon-400);
+--text-link-hover:var(--brass-300);
+--border-hairline:rgba(251,250,246,.20);
+--border-hairline-ink:rgba(251,250,246,.14);
+--border-strong:var(--bone-100);
+--border-inverse:rgba(10,16,20,.24);
+--interactive-bg:var(--bone-50);
+--interactive-bg-hover:var(--bone-200);
+--interactive-bg-active:var(--bone-300);
+--interactive-fg:var(--ink-900);
+--interactive-accent:var(--persimmon-400);
+--interactive-accent-hover:var(--persimmon-200);
+--interactive-quiet-hover:rgba(251,250,246,.09);
+--interactive-quiet-active:rgba(251,250,246,.15);
+--interactive-disabled-bg:var(--ink-700);
+--interactive-disabled-fg:var(--ink-500);
+--focus-ring:var(--lagoon-300);
+--data-1:var(--bone-100);--data-2:var(--persimmon-400);--data-3:var(--lagoon-300);--data-4:var(--brass-300);--data-5:var(--ink-300);--data-6:var(--lagoon-500);
+--data-grid:rgba(251,250,246,.14);
+}

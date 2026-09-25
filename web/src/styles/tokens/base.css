@@ -1,0 +1,21 @@
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--surface-page);color:var(--text-body);font:var(--type-body);text-wrap:pretty;-webkit-font-smoothing:antialiased}
+::selection{background:var(--selection-bg);color:var(--text-display)}
+h1,h2,h3,h4,p,figure,blockquote{margin:0}
+h1{font:var(--type-h1);letter-spacing:var(--tracking-display);color:var(--text-display)}
+h2{font:var(--type-h2);letter-spacing:var(--tracking-heading);color:var(--text-display)}
+h3{font:var(--type-h3);color:var(--text-display)}
+h4{font:var(--type-h4);color:var(--text-display)}
+a{color:var(--text-link);text-decoration:none;border-bottom:1px solid currentColor;transition:var(--transition-control)}
+a:hover{color:var(--text-link-hover)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:var(--focus-ring-width) solid var(--focus-ring);outline-offset:var(--focus-ring-offset)}
+hr{border:0;border-top:var(--rule-weight) solid var(--border-hairline);margin:var(--space-8) 0}
+code,kbd,samp{font-family:var(--font-mono);font-size:.92em}
+table{border-collapse:collapse}
+img{max-width:100%;display:block}
+/* Brand utility: the okwe row — the seed/counter motif used as a divider or mark. */
+.okwe-row{display:flex;gap:var(--space-2);align-items:center}
+.okwe-row i{width:6px;height:6px;border-radius:var(--radius-circle);background:var(--text-display);display:block}
+.okwe-row i.is-open{background:transparent;box-shadow:inset 0 0 0 1px var(--text-display)}
+.okwe-row i.is-accent{background:var(--surface-accent)}

@@ -1,0 +1,30 @@
+:root{
+/* Three families, three jobs. Nothing else. */
+--font-display:"Newsreader",Georgia,"Times New Roman",serif;   /* display + headlines */
+--font-sans:"Public Sans","Helvetica Neue",Arial,sans-serif;    /* body, UI, captions */
+--font-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",monospace; /* data, labels, codes */
+
+--weight-light:300;--weight-regular:400;--weight-medium:500;--weight-semibold:600;--weight-bold:700;
+
+/* Type scale — 1.25 ratio, tuned so 1920x1080 slide text never falls below 24px. */
+--size-3xs:11px;--size-2xs:12px;--size-xs:13px;--size-sm:15px;--size-md:17px;--size-lg:20px;--size-xl:25px;--size-2xl:31px;--size-3xl:39px;--size-4xl:49px;--size-5xl:61px;--size-6xl:76px;--size-7xl:96px;
+
+--leading-tight:1.02;--leading-snug:1.14;--leading-heading:1.22;--leading-body:1.55;--leading-loose:1.7;
+--tracking-display:-0.02em;--tracking-heading:-0.012em;--tracking-body:0em;--tracking-label:0.10em;--tracking-mono:0.02em;
+--measure-narrow:44ch;--measure-body:66ch;--measure-wide:78ch;
+
+/* Composed roles */
+--type-display:var(--weight-regular) var(--size-6xl)/var(--leading-tight) var(--font-display);
+--type-h1:var(--weight-regular) var(--size-4xl)/var(--leading-snug) var(--font-display);
+--type-h2:var(--weight-regular) var(--size-3xl)/var(--leading-snug) var(--font-display);
+--type-h3:var(--weight-semibold) var(--size-xl)/var(--leading-heading) var(--font-sans);
+--type-h4:var(--weight-semibold) var(--size-md)/var(--leading-heading) var(--font-sans);
+--type-lede:var(--weight-light) var(--size-lg)/var(--leading-body) var(--font-sans);
+--type-body:var(--weight-regular) var(--size-md)/var(--leading-body) var(--font-sans);
+--type-body-sm:var(--weight-regular) var(--size-sm)/var(--leading-body) var(--font-sans);
+--type-caption:var(--weight-regular) var(--size-xs)/var(--leading-body) var(--font-sans);
+--type-label:var(--weight-semibold) var(--size-2xs)/1.2 var(--font-mono);
+--type-data:var(--weight-medium) var(--size-sm)/1.3 var(--font-mono);
+--type-figure:var(--weight-regular) var(--size-5xl)/var(--leading-tight) var(--font-mono);
+--type-quote:var(--weight-light) italic var(--size-2xl)/var(--leading-snug) var(--font-display);
+}

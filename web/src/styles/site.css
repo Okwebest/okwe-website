@@ -1,0 +1,81 @@
+/*
+ * Site-level rules for the Okwe website. Everything the design set on the root
+ * at runtime (its PAPER map and the --nw narrow flag) lives here as plain CSS.
+ *
+ * `data-theme` is used at two independent scopes:
+ *   1. <html data-theme="dark"> is the visitor's colour mode, written only by
+ *      useColorMode. The paper variables below key off it and nothing else,
+ *      hence the `:root[...]` anchor.
+ *   2. data-theme="dark" on a section or on the masthead means "this surface
+ *      is ink" and flips the design-system semantic tokens inside it. It must
+ *      never be read as the global mode, so no un-anchored [data-theme] rule
+ *      belongs in this file.
+ */
+:root {
+  --paper: #f4f1ea;
+  --paper-hi: #fbfaf6;
+  --paper-lo: #e9e4d9;
+  --rule: #d9d2c4;
+  --on-paper: #0a1014;
+  --on-paper-2: #1b2a33;
+  --on-paper-3: #47606c;
+  --acc-k: #125b58;
+  --acc-c: #8a6317;
+  --acc-c2: #a87c1f;
+  --acc-m: #b3391f;
+  --acc-m2: #c8442a;
+  --hl: #efe0bc;
+  --ok-bg: #dcedeb;
+  --nw: 0;
+}
+:root[data-theme='dark'] {
+  --paper: #101a21;
+  --paper-hi: #1b2a33;
+  --paper-lo: #0a1014;
+  --rule: rgba(251, 250, 246, 0.2);
+  --on-paper: #fbfaf6;
+  --on-paper-2: #c6d2d8;
+  --on-paper-3: #9cb0ba;
+  --acc-k: #6fb0ab;
+  --acc-c: #e0be72;
+  --acc-c2: #c8952f;
+  --acc-m: #de6a4f;
+  --acc-m2: #de6a4f;
+  --hl: rgba(200, 149, 47, 0.28);
+  --ok-bg: rgba(28, 124, 119, 0.22);
+}
+@media (max-width: 859px) {
+  :root {
+    --nw: 1;
+  }
+}
+
+/* Tailwind preflight is off (the design-system base.css is the reset), so the
+   border-* width utilities need the one preflight rule they rely on. */
+*,
+*::before,
+*::after {
+  border-width: 0;
+  border-style: solid;
+  border-color: currentColor;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+body {
+  background: #0a1014;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Move chapter route line: the design advances stroke-dashoffset by 18 units
+   per second (90 while the sticky stage is hovered) modulo 1400. */
+@keyframes okwe-flow {
+  to {
+    stroke-dashoffset: -1400;
+  }
+}
