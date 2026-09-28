@@ -1,0 +1,26 @@
+# Okwe — local development in Docker (Redwood dev server with hot reload).
+#
+# Usage: ./scripts/docker/dev.sh up
+#
+# The repository is bind-mounted for live editing. node_modules live in anonymous
+# volumes populated from the image, so host (macOS) binaries never reach the Linux
+# container; `dev.sh up` renews them on every start.
+
+name: okwe-dev
+
+services:
+  redwood:
+    build:
+      context: .
+      target: dev
+    image: okwe-dev:local
+    ports:
+      - "${OKWE_DEV_PORT:-8910}:8910"
+    environment:
+      # The vite dev server proxies /.redwood/functions to the api server on this host.
+      REDWOOD_API_HOST: 0.0.0.0
+    volumes:
+      - .:/home/node/app
+      - /home/node/app/node_modules
+      - /home/node/app/web/node_modules
+      - /home/node/app/api/node_modules

@@ -120,3 +120,13 @@ The best way to learn Redwood is by going through the comprehensive [tutorial](h
 
 - Stay updated: read [Forum announcements](https://community.redwoodjs.com/c/announcements/5), follow us on [Twitter](https://twitter.com/redwoodjs), and subscribe to the [newsletter](https://redwoodjs.com/newsletter)
 - [Learn how to contribute](https://redwoodjs.com/docs/contributing)
+
+## Docker
+
+The site runs in Docker for development, production (any Docker host) and SecretVM
+(https://okwebest.com). See [scripts/docker/README.md](scripts/docker/README.md).
+
+```
+./scripts/docker/dev.sh up                 # development with hot reload
+./scripts/docker/build-push.sh <version>   # build, push and pin a release
+```

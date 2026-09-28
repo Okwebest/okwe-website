@@ -1,0 +1,29 @@
+# Dependencies and build output are produced inside the image
+**/node_modules
+**/dist
+.redwood
+.yarn/install-state.gz
+
+# Secrets and local environment files
+**/.env
+**/.env.*
+
+# Local databases
+api/db/*.db*
+
+# VCS, editors, OS
+.git
+.gitignore
+.vscode
+.idea
+**/.DS_Store
+
+# Docs (this also keeps Redwood's scaffold web/public/README.md out of the site)
+docs
+**/*.md
+
+# Docker and deployment tooling
+Dockerfile
+.dockerignore
+docker-compose*.yml
+scripts/docker
