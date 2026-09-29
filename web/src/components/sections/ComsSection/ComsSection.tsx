@@ -80,7 +80,12 @@ const ComsSection = () => {
             clipPath: 'inset(0 calc((1 - var(--t,1)) * 100%) 0 0)',
           }}
         >
-          <ImageSlot id="okwe-coms" placeholder={coms.imagePlaceholder} />
+          <ImageSlot
+            id="okwe-coms"
+            placeholder={coms.imagePlaceholder}
+            src={coms.image}
+            alt={coms.imageAlt}
+          />
         </div>
         <div
           data-a="0 0.6"

@@ -151,7 +151,12 @@ const MoveWide = () => (
         </div>
 
         <div className="absolute left-[300vw] top-0 h-full w-[60vw]">
-          <ImageSlot id="okwe-move" placeholder={move.imagePlaceholderWide} />
+          <ImageSlot
+            id="okwe-move"
+            placeholder={move.imagePlaceholderWide}
+            src={move.image}
+            alt={move.imageAlt}
+          />
         </div>
       </div>
 
@@ -279,7 +284,12 @@ const MoveNarrow = () => (
         className="absolute inset-0"
         style={{ clipPath: 'inset(calc((1 - var(--t,1)) * 100%) 0 0 0)' }}
       >
-        <ImageSlot id="okwe-move" placeholder={move.imagePlaceholderNarrow} />
+        <ImageSlot
+          id="okwe-move"
+          placeholder={move.imagePlaceholderNarrow}
+          src={move.image}
+          alt={move.imageAlt}
+        />
       </div>
     </div>
   </section>
