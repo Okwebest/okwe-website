@@ -20,7 +20,12 @@ const CustomersSection = () => (
             'inset(calc((1 - var(--t,1)) * 10%) calc((1 - var(--t,1)) * 22%))',
         }}
       >
-        <ImageSlot id="okwe-serve" placeholder={customers.imagePlaceholder} />
+        <ImageSlot
+          id="okwe-serve"
+          placeholder={customers.imagePlaceholder}
+          src={customers.image}
+          alt={customers.imageAlt}
+        />
       </div>
     </div>
 

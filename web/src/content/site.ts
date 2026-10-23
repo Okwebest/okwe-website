@@ -118,6 +118,8 @@ export const knows = {
   category: 'Knowledge & Intelligence',
   imagePlaceholder:
     'Photograph — close-up of product samples, trade documents, market research',
+  image: '/okwe-image/trade-sample-research.jpeg',
+  imageAlt: 'Product samples, trade documents and market research on a desk',
   statement:
     'We gather, organize, and apply the information needed to make informed trade decisions — so you know what is available, where it is available, and who needs it.',
   purposeLabel: 'Purpose',
@@ -140,6 +142,8 @@ export const coms = {
   category: 'Communication & Commerce',
   imagePlaceholder:
     'Photograph — two traders at a table, hands, samples, a negotiation',
+  image: '/okwe-image/two-traders.jpeg',
+  imageAlt: 'Two traders reviewing product samples and documents at a table',
   hubLabel: ['Okwe', 'Coms'],
   statement:
     'We connect the parties involved in a transaction and help move an opportunity toward an actual trade.',
@@ -163,6 +167,8 @@ export const move = {
     'Photograph — port crane, road freight or cargo detail, full height',
   imagePlaceholderNarrow:
     'Photograph — port crane, road freight or cargo detail',
+  image: '/okwe-image/port-cranes.jpeg',
+  imageAlt: 'Port cranes lifting a shipping container onto a truck',
   statement:
     'Once a trade is agreed, we coordinate the physical movement of goods through the right logistics channels.',
   purposeLabel: 'Purpose',
@@ -227,6 +233,8 @@ export const customers = {
   lede: 'From SMEs entering new markets to established cross-border traders — Okwe fits into different parts of the trade cycle depending on your needs.',
   imagePlaceholder:
     'Photograph — market, warehouse or port infrastructure, wide cinematic crop',
+  image: '/okwe-image/market-warehouse.jpeg',
+  imageAlt: 'Warehouse and port workers handling cargo and containers',
   tags: [
     'Importers',
     'Exporters',

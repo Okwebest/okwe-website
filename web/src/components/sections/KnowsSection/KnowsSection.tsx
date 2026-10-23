@@ -37,7 +37,12 @@ const KnowsSection = () => {
             clipPath: 'inset(calc((1 - var(--t,1)) * 100%) 0 0 0)',
           }}
         >
-          <ImageSlot id="okwe-know" placeholder={knows.imagePlaceholder} />
+          <ImageSlot
+            id="okwe-know"
+            placeholder={knows.imagePlaceholder}
+            src={knows.image}
+            alt={knows.imageAlt}
+          />
         </div>
         <div
           data-a="0 0.6"
