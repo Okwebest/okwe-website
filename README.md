@@ -1,132 +1,180 @@
-# README
+# Okwe website
 
-Welcome to [RedwoodJS](https://redwoodjs.com)!
+The marketing site for Okwe Import Export Solutions — _Know. Connect. Move._ — built with
+[Next.js](https://nextjs.org) (App Router, static export), React 19, TypeScript and Tailwind CSS v4.
 
-> **Prerequisites**
->
-> - Redwood requires [Node.js](https://nodejs.org/en/) (=20.x) and [Yarn](https://yarnpkg.com/)
-> - Are you on Windows? For best results, follow our [Windows development setup](https://redwoodjs.com/docs/how-to/windows-development-setup) guide
+The site is fully static: `npm run build` writes plain HTML, JS and CSS to `out/`, which is served
+by nginx in production (Docker, SecretVM). There is no server runtime and no database.
 
-Start by installing dependencies:
+## Prerequisites
 
-```
-yarn install
-```
+| Tool    | Version                                        |
+| ------- | ---------------------------------------------- |
+| Node.js | 24.x (see `.nvmrc`; `engines` requires `>=24`) |
+| npm     | 10 or newer (bundled with Node 24)             |
 
-Then start the development server:
+No Yarn, no corepack, no global CLI. Docker is only needed for the container workflows in
+[scripts/docker/README.md](scripts/docker/README.md).
 
-```
-yarn redwood dev
-```
+## Install
 
-Your browser should automatically open to [http://localhost:8910](http://localhost:8910) where you'll see the Welcome Page, which links out to many great resources.
-
-> **The Redwood CLI**
->
-> Congratulations on running your first Redwood CLI command! From dev to deploy, the CLI is with you the whole way. And there's quite a few commands at your disposal:
->
-> ```
-> yarn redwood --help
-> ```
->
-> For all the details, see the [CLI reference](https://redwoodjs.com/docs/cli-commands).
-
-## Prisma and the database
-
-Redwood wouldn't be a full-stack framework without a database. It all starts with the schema. Open the [`schema.prisma`](api/db/schema.prisma) file in `api/db` and replace the `UserExample` model with the following `Post` model:
-
-```prisma
-model Post {
-  id        Int      @id @default(autoincrement())
-  title     String
-  body      String
-  createdAt DateTime @default(now())
-}
+```bash
+npm ci          # reproducible install from package-lock.json
 ```
 
-Redwood uses [Prisma](https://www.prisma.io/), a next-gen Node.js and TypeScript ORM, to talk to the database. Prisma's schema offers a declarative way of defining your app's data models. And Prisma [Migrate](https://www.prisma.io/migrate) uses that schema to make database migrations hassle-free:
+`npm install` also works but may update the lockfile; use `npm ci` in CI and Docker.
 
-```
-yarn rw prisma migrate dev
+## Environment variables
 
-# ...
+None are required. `.env.example` documents the convention (`NEXT_PUBLIC_*` variables are exposed
+to the browser bundle; everything else is build-time only). Copy it to `.env.local` if you add any.
 
-? Enter a name for the new migration: › create posts
-```
+## Development
 
-> `rw` is short for `redwood`
-
-You'll be prompted for the name of your migration. `create posts` will do.
-
-Now let's generate everything we need to perform all the CRUD (Create, Retrieve, Update, Delete) actions on our `Post` model:
-
-```
-yarn redwood generate scaffold post
+```bash
+npm run dev     # http://localhost:8910 with hot reload (Turbopack)
 ```
 
-Navigate to [http://localhost:8910/posts/new](http://localhost:8910/posts/new), fill in the title and body, and click "Save".
+The dev port is 8910 to match the project's existing docs and Docker setup. Pass another port with
+`npm run dev -- -p 3000`.
 
-Did we just create a post in the database? Yup! With `yarn rw generate scaffold <model>`, Redwood created all the pages, components, and services necessary to perform all CRUD actions on our posts table.
+## Scripts
 
-## Frontend first with Storybook
+| Command                           | What it does                                                                        |
+| --------------------------------- | ----------------------------------------------------------------------------------- |
+| `npm run dev`                     | Dev server on port 8910                                                             |
+| `npm run build`                   | Production static export to `out/`, then generates the nginx CSP snippet            |
+| `npm run preview`                 | Serves `out/` on http://localhost:8080 the way nginx routes it (`PORT=…` to change) |
+| `npm run images`                  | Regenerates the responsive photo set in `public/okwe-image/` from `assets/images/`  |
+| `npm run lint`                    | ESLint (Next.js core-web-vitals + TypeScript rules, React 19 hooks rules)           |
+| `npm run typecheck`               | `tsc --noEmit`                                                                      |
+| `npm test`                        | Vitest (jsdom + Testing Library), single run                                        |
+| `npm run test:watch`              | Vitest in watch mode                                                                |
+| `npm run format` / `format:check` | Prettier (with the Tailwind class sorter)                                           |
+| `npm run audit`                   | `npm audit` failing on high/critical advisories                                     |
+| `npm run check`                   | typecheck + lint + test + build, in that order                                      |
 
-Don't know what your data models look like? That's more than ok—Redwood integrates Storybook so that you can work on design without worrying about data. Mockup, build, and verify your React components, even in complete isolation from the backend:
-
-```
-yarn rw storybook
-```
-
-Seeing "Couldn't find any stories"? That's because you need a `*.stories.{tsx,jsx}` file. The Redwood CLI makes getting one easy enough—try generating a [Cell](https://redwoodjs.com/docs/cells), Redwood's data-fetching abstraction:
-
-```
-yarn rw generate cell examplePosts
-```
-
-The Storybook server should hot reload and now you'll have four stories to work with. They'll probably look a little bland since there's no styling. See if the Redwood CLI's `setup ui` command has your favorite styling library:
-
-```
-yarn rw setup ui --help
-```
-
-## Testing with Jest
-
-It'd be hard to scale from side project to startup without a few tests. Redwood fully integrates Jest with both the front- and back-ends, and makes it easy to keep your whole app covered by generating test files with all your components and services:
+## Project layout
 
 ```
-yarn rw test
+src/app/                 Next.js App Router
+  layout.tsx             <html>/<body>, metadata, self-hosted fonts, theme bootstrap
+  globals.css            design-system tokens + site rules + Tailwind v4 theme
+  (site)/layout.tsx      masthead, footer, cursor and scroll engine (MainLayout)
+  (site)/page.tsx        /         the one-page site (14 sections)
+  (site)/contact/        /contact  the contact chapter on its own
+  (site)/legal/[slug]/   /legal/privacy, /legal/terms, /legal/dpa, /legal/disclaimer
+  not-found.tsx          404 page (rendered without the site chrome)
+  error.tsx, global-error.tsx      error boundaries
+src/components/          sections/, ui/ primitives, LegalPage, Masthead, Footer, RouteMap, …
+src/hooks/               useScrollEngine, useColorMode, useNarrow, useClock, …
+src/lib/                 pure geometry/scroll maths (unit-tested)
+src/content/site.ts      every string the site shows (copy, contact details, form URL)
+src/content/legal.ts     the four legal documents
+src/content/images.ts    GENERATED photo manifest (npm run images)
+assets/images/           source photographs (not shipped; input to npm run images)
+src/styles/              design-system token CSS (verbatim) and site.css
+public/                  okwe-image/ (generated AVIF/WebP/JPEG + favicon), robots.txt, theme-init.js
+docker/nginx/            nginx config + CSP template for the production image
+scripts/                 csp-hashes.mjs, preview.mjs, docker/ helpers
 ```
 
-To make the integration even more seamless, Redwood augments Jest with database [scenarios](https://redwoodjs.com/docs/testing#scenarios) and [GraphQL mocking](https://redwoodjs.com/docs/testing#mocking-graphql-calls).
+## Testing
 
-## Ship it
-
-Redwood is designed for both serverless deploy targets like Netlify and Vercel and serverful deploy targets like Render and AWS:
-
-```
-yarn rw setup deploy --help
+```bash
+npm test
 ```
 
-Don't go live without auth! Lock down your app with Redwood's built-in, database-backed authentication system ([dbAuth](https://redwoodjs.com/docs/authentication#self-hosted-auth-installation-and-setup)), or integrate with nearly a dozen third-party auth providers:
+Tests live next to the code (`*.test.ts(x)`) and run in jsdom with Testing Library. They cover the
+scroll/geometry maths, the enquiry form (what it posts to the Google Form, the failure path, the
+honeypot), the contact channels, the responsive image component, the masthead's phone menu, the
+layout chrome (nav, footer links), every page including the four legal documents, and the 404 page.
 
+## Content
+
+Everything a visitor reads lives in two files, so copy never has to be hunted through components:
+
+- `src/content/site.ts` — every section's text, the masthead/footer links, and the contact details:
+  email, phone (`+234 810 797 3645`), the WhatsApp link (`wa.me/2348107973645`) and the enquiry
+  form's wiring (see below). Change a number here and it updates everywhere.
+  The copy is written for the customer: name the frustration, then what Okwe does about it. Keep
+  the array lengths (six Knows items, six Coms labels, six Move stops, five steps, four quadrants,
+  thirteen promise words) because the layouts and reveal windows depend on them.
+- `src/content/legal.ts` — the Privacy Policy, Terms of Use, Data Processing Agreement and
+  Disclaimer served at `/legal/<slug>`. They are drafts written for a Lagos business under the
+  Nigeria Data Protection Act 2023 using only facts known about Okwe; **have them reviewed by
+  counsel** and bump `legalEffectiveDate` whenever the text changes.
+
+### The enquiry form
+
+The Contact page shows an Okwe-styled form; nothing from Google is visible. On submit it posts the
+answers straight into the Okwe Google Form's `formResponse` endpoint, so they appear in the form's
+responses sheet next to any other submission. The mapping lives in `contact.form` in
+`src/content/site.ts`: `action`, `viewUrl`, the six `entry.*` field ids and the service options
+(Okwe wording as the label, the exact Google option text as the value).
+
+Google sends no CORS headers, so the browser posts with `mode: 'no-cors'` and cannot read the
+reply: a completed request shows "Message received.", a network failure keeps the visitor's text on
+screen with WhatsApp and the hosted form as fallbacks. A hidden honeypot field drops bots silently.
+
+If the Google Form is edited (a question added, removed or its options changed), refresh the ids:
+open the form's `viewform` URL, view the page source, find `FB_PUBLIC_LOAD_DATA_` and read each
+question's `entry` number and option strings, then update `contact.form.fields` and
+`contact.form.services`. The test in `EnquiryForm.test.tsx` checks the body that is sent.
+
+### Licensing statement
+
+Okwe is obtaining its own import/export licence and currently delivers the regulated steps through
+licensed partners. That is stated in the Disclaimer (§·02), in the FAQ (Q·06) and in the Move
+chapter; update all three when the licence is granted.
+
+### Photographs
+
+Source photos live in `assets/images/` (full-resolution JPEGs). They are never served directly.
+`npm run images` (uses `sharp`, a dev dependency) writes AVIF, WebP and progressive JPEG versions at
+640/960/1280/1920 px into `public/okwe-image/` with a content hash in the file name, and regenerates
+`src/content/images.ts`. `ImageSlot` renders them as a `<picture>` with `srcset`/`sizes`, lazy
+loading and explicit dimensions, so a page view downloads one small AVIF per photo (roughly 25–240 KB
+depending on the slot and screen) instead of the 3–4 MB originals, and nothing shifts while it loads.
+nginx (and `npm run preview`) serve `/okwe-image/*` with a one-year immutable cache, so repeat
+visits never re-download a photo. To add or replace a photo: drop the file in `assets/images/`, add
+its key and alt text to the `PHOTOS` table in `scripts/optimize-images.mjs`, run `npm run images`,
+reference `images.<key>` from `src/content/site.ts`, and commit the generated files.
+
+## Production build
+
+```bash
+npm run build      # → out/ and docker/nginx/security-headers.conf
+npm run preview    # optional local check at http://localhost:8080
 ```
-yarn rw setup auth --help
-```
 
-## Next Steps
+`next build` produces the static export. `scripts/csp-hashes.mjs` then hashes the small inline
+bootstrap scripts Next emits and writes `docker/nginx/security-headers.conf` from its `.tmpl`, so
+the production Content-Security-Policy stays strict (`script-src 'self' 'sha256-…'`, no
+`unsafe-inline`). The generated file is git-ignored; edit the template instead. The policy allows
+exactly one third-party origin, `connect-src 'self' https://docs.google.com`, so the enquiry form
+can post into the Google Form; the site frames nothing and may not be framed by anyone.
 
-The best way to learn Redwood is by going through the comprehensive [tutorial](https://redwoodjs.com/docs/tutorial/foreword) and joining the community (via the [Discourse forum](https://community.redwoodjs.com) or the [Discord server](https://discord.gg/redwoodjs)).
+`next/font` downloads the three brand families (Newsreader, Public Sans, IBM Plex Mono) during the
+build and self-hosts them, so the build machine needs network access and the site makes no
+third-party requests at runtime.
 
-## Quick Links
+## Deployment
 
-- Stay updated: read [Forum announcements](https://community.redwoodjs.com/c/announcements/5), follow us on [Twitter](https://twitter.com/redwoodjs), and subscribe to the [newsletter](https://redwoodjs.com/newsletter)
-- [Learn how to contribute](https://redwoodjs.com/docs/contributing)
+Production is a single nginx image (`okwe-web`) built from the `Dockerfile`, serving `out/` on port
+8080 behind your TLS terminator (Traefik on SecretVM). See
+[scripts/docker/README.md](scripts/docker/README.md) for development in Docker, releasing, the
+production compose file and the SecretVM deployment at https://okwebest.com.
 
-## Docker
-
-The site runs in Docker for development, production (any Docker host) and SecretVM
-(https://okwebest.com). See [scripts/docker/README.md](scripts/docker/README.md).
-
-```
+```bash
 ./scripts/docker/dev.sh up                 # development with hot reload
 ./scripts/docker/build-push.sh <version>   # build, push and pin a release
 ```
+
+Any static host also works: upload the contents of `out/` and configure it to serve `/contact` →
+`contact.html`, `/legal/privacy` → `legal/privacy.html` (and so on) and unknown paths → `404.html`.
+
+## Migration notes
+
+This project was migrated from RedwoodJS. See [MIGRATION.md](MIGRATION.md) for the mapping of
+files, the dependency and security audit, and the known limitations.

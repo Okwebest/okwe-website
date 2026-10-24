@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Okwe: local development in Docker (Redwood dev server with hot reload).
+# Okwe: local development in Docker (Next.js dev server with hot reload).
 #
 # Usage: ./scripts/docker/dev.sh <command>
 #
@@ -10,8 +10,8 @@
 #   logs         Follow the dev server logs
 #   shell        Open a shell in the running container
 #   run <cmd…>   Run a one-off command in a fresh container, e.g.
-#                  ./scripts/docker/dev.sh run yarn rw test web --no-watch
-#                  ./scripts/docker/dev.sh run yarn rw prisma migrate dev
+#                  ./scripts/docker/dev.sh run npm test
+#                  ./scripts/docker/dev.sh run npm run lint
 #   clean        Remove the dev containers, volumes and image (asks first)
 #
 # The site is served on http://localhost:$OKWE_DEV_PORT (default 8910).
@@ -36,7 +36,7 @@ case "$COMMAND" in
     up)
         require_compose
         # --renew-anon-volumes: node_modules always match the freshly built image,
-        # so dependency changes in package.json/yarn.lock are picked up.
+        # so dependency changes in package.json/package-lock.json are picked up.
         compose up --build --renew-anon-volumes --detach
         log_success "Dev server starting on http://localhost:${OKWE_DEV_PORT}"
         log_info "Follow the logs: ./scripts/docker/dev.sh logs"
@@ -52,12 +52,12 @@ case "$COMMAND" in
         ;;
     shell)
         require_compose
-        compose exec redwood bash
+        compose exec web bash
         ;;
     run)
         [[ $# -gt 0 ]] || die "Usage: ./scripts/docker/dev.sh run <command…>"
         require_compose
-        compose run --rm --no-deps redwood "$@"
+        compose run --rm --no-deps web "$@"
         ;;
     clean)
         require_compose

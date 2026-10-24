@@ -1,16 +1,16 @@
 # Okwe: Docker
 
-The Okwe site is a RedwoodJS app whose web side builds to static files (`web/dist`). In
-production there's nothing to run but a web server. So there's one image, `okwe-web`:
-Node 20 builds the site, and unprivileged nginx serves it on port 8080. That same image
-runs in both production and SecretVM, pinned by digest.
+The Okwe site is a Next.js app exported to static files (`out/`). In production there's
+nothing to run but a web server. So there's one image, `okwe-web`: Node 24 builds the site,
+and unprivileged nginx serves it on port 8080. That same image runs in both production and
+SecretVM, pinned by digest.
 
-| Environment | Compose file | Script |
-| --- | --- | --- |
-| Development (hot reload) | `docker-compose.dev.yml` | `dev.sh` |
-| Production, any Docker host (TLS upstream) | `docker-compose.prod.yml` | `prod.sh` |
-| SecretVM, https://okwebest.com | `docker-compose.secretvm.yml` | `secretvm.sh` |
-| Build, push and pin a release | — | `build-push.sh` |
+| Environment                                | Compose file                  | Script          |
+| ------------------------------------------ | ----------------------------- | --------------- |
+| Development (hot reload)                   | `docker-compose.dev.yml`      | `dev.sh`        |
+| Production, any Docker host (TLS upstream) | `docker-compose.prod.yml`     | `prod.sh`       |
+| SecretVM, https://okwebest.com             | `docker-compose.secretvm.yml` | `secretvm.sh`   |
+| Build, push and pin a release              | —                             | `build-push.sh` |
 
 Requirements: Docker with Compose v2 and Buildx (Docker Desktop includes both), plus `curl`.
 
@@ -22,14 +22,14 @@ Every setting has a default, so no configuration is needed. To change one:
 cp scripts/docker/.env.example scripts/docker/.env   # git-ignored
 ```
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `REGISTRY` | `docker.io` | Registry to push to |
-| `IMAGE_NAMESPACE` | `privexlabs` | Docker Hub org/user, or GHCR owner |
-| `IMAGE_NAME` | `okwe-web` | Image name |
-| `PLATFORM` | `linux/amd64` | Target platform (SecretVM is amd64) |
-| `OKWE_DEV_PORT` | `8910` | Host port for the dev server |
-| `OKWE_PROD_PORT` | `8080` | Host port for the production container |
+| Variable          | Default        | Purpose                                |
+| ----------------- | -------------- | -------------------------------------- |
+| `REGISTRY`        | `docker.io`    | Registry to push to                    |
+| `IMAGE_NAMESPACE` | `privexlabs`   | Docker Hub org/user, or GHCR owner     |
+| `IMAGE_NAME`      | `okwe-web`     | Image name                             |
+| `PLATFORM`        | `linux/amd64`  | Target platform (SecretVM is amd64)    |
+| `OKWE_DEV_PORT`   | `8910`         | Host port for the dev server           |
+| `OKWE_PROD_PORT`  | `8080`         | Host port for the production container |
 | `SECRETVM_DOMAIN` | `okwebest.com` | Domain checked by `secretvm.sh verify` |
 
 Variables set in your shell override the file, for example `OKWE_DEV_PORT=8913 ./scripts/docker/dev.sh up`.
@@ -39,15 +39,15 @@ Variables set in your shell override the file, for example `OKWE_DEV_PORT=8913 .
 ```bash
 ./scripts/docker/dev.sh up        # http://localhost:8910, edits hot-reload
 ./scripts/docker/dev.sh logs
-./scripts/docker/dev.sh run yarn rw test web --no-watch
-./scripts/docker/dev.sh run yarn rw prisma migrate dev
+./scripts/docker/dev.sh run npm test
+./scripts/docker/dev.sh run npm run lint
 ./scripts/docker/dev.sh shell
 ./scripts/docker/dev.sh down
 ```
 
-Your working copy is mounted into the container. `node_modules` stays inside the container,
-because macOS and Linux binaries differ. Every `up` rebuilds it from `yarn.lock`, so
-dependency changes are picked up automatically.
+Your working copy is mounted into the container. `node_modules` and `.next` stay inside the
+container, because macOS and Linux binaries differ. Every `up` rebuilds them from
+`package-lock.json`, so dependency changes are picked up automatically.
 
 ## Releasing
 
@@ -118,27 +118,31 @@ Put the previous release's digest back into the compose files, either with
 
 ## What's in the image
 
-- `Dockerfile` target `web`: `yarn rw build web --no-prerender`, with the output in
-  `nginxinc/nginx-unprivileged:1.30-alpine`.
+- `Dockerfile` target `web`: `npm run build` (Next.js static export plus the generated CSP
+  snippet), with the output in `nginxinc/nginx-unprivileged:1.30-alpine`. The git revision is
+  passed in as `VCS_REF` and seeds Next's build id, so a commit always builds the same files.
 - The image runs as uid 101 and works on a read-only root filesystem (only `/tmp` is written).
 - It has a built-in `HEALTHCHECK`.
 - `docker/nginx/default.conf` handles:
-  - the SPA fallback to Redwood's `200.html`
-  - `/assets/*` cached as immutable
-  - HTML sent with `no-cache`
+  - static-export routing (`/contact` → `contact.html`, unknown paths → `404.html` with a 404)
+  - `/_next/static/*` cached as immutable
+  - HTML and RSC payloads (`*.txt`) sent with `no-cache`
   - gzip
   - `/healthz`
-- `docker/nginx/security-headers.conf` sets the CSP, `nosniff`, frame denial, the referrer
-  policy and the permissions policy. If the site starts loading a new third-party origin
-  (analytics, maps, fonts), add that origin to the CSP.
+- `docker/nginx/default.conf` caches `/_next/static/` and the content-hashed photos under
+  `/okwe-image/` for a year (immutable) and serves HTML with `no-cache`.
+- `docker/nginx/security-headers.conf.tmpl` sets the CSP, `nosniff`, frame denial, the referrer
+  policy and the permissions policy. `scripts/csp-hashes.mjs` (run by `npm run build`) fills in
+  the SHA-256 hashes of Next's inline bootstrap scripts, so `script-src` never needs
+  `'unsafe-inline'`. Fonts are self-hosted, so no third-party origin is allowed; if the site
+  starts loading one (analytics, maps), add that origin to the template.
 
-The API side (`api/`) isn't deployed because the site doesn't use it yet. When it does,
-add an `api` build target (Redwood's official `api_serve` stage is the reference) and an
-nginx `location /.redwood/functions/` that proxies to it.
+The site has no backend. If one is added later, run it as its own container and add an nginx
+`location /api/` that proxies to it (or move to Next's Node server with `output: 'standalone'`).
 
 ## Troubleshooting
 
 - **"Docker daemon is not running"**: start Docker Desktop.
 - **Port already in use**: set `OKWE_DEV_PORT` or `OKWE_PROD_PORT`.
 - **Push denied**: run `docker login $REGISTRY` with an account that can push to `$IMAGE_NAMESPACE`.
-- **Page is blank in the browser**: open the console and look for CSP violations. `prod.sh smoke` checks the headers and assets.
+- **Page is blank in the browser**: open the console and look for CSP violations. `prod.sh smoke` checks the headers and assets. A CSP violation on an inline script means `docker/nginx/security-headers.conf` was not regenerated for this build: rebuild the image (never copy the snippet from another build).

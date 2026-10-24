@@ -1,26 +1,25 @@
-# Okwe — local development in Docker (Redwood dev server with hot reload).
+# Okwe — local development in Docker (Next.js dev server with hot reload).
 #
 # Usage: ./scripts/docker/dev.sh up
 #
-# The repository is bind-mounted for live editing. node_modules live in anonymous
-# volumes populated from the image, so host (macOS) binaries never reach the Linux
-# container; `dev.sh up` renews them on every start.
+# The repository is bind-mounted for live editing. node_modules and .next live in
+# anonymous volumes populated from the image, so host (macOS) binaries never reach
+# the Linux container; `dev.sh up` renews them on every start.
 
 name: okwe-dev
 
 services:
-  redwood:
+  web:
     build:
       context: .
       target: dev
     image: okwe-dev:local
     ports:
-      - "${OKWE_DEV_PORT:-8910}:8910"
+      - '${OKWE_DEV_PORT:-8910}:8910'
     environment:
-      # The vite dev server proxies /.redwood/functions to the api server on this host.
-      REDWOOD_API_HOST: 0.0.0.0
+      # Turbopack file watching works on bind mounts; polling is a fallback.
+      WATCHPACK_POLLING: 'true'
     volumes:
       - .:/home/node/app
       - /home/node/app/node_modules
-      - /home/node/app/web/node_modules
-      - /home/node/app/api/node_modules
+      - /home/node/app/.next

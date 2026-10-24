@@ -181,7 +181,7 @@ _smoke_header() {
 
 # smoke <base-url>: checks health, SPA routing, asset caching and security headers.
 smoke() {
-    local base="${1%/}" asset header
+    local base="${1%/}" asset header photo
     require_cmd curl
     SMOKE_FAILURES=0
     SMOKE_TMP="$(mktemp -d)"
@@ -192,29 +192,55 @@ smoke() {
     if [[ "$FETCH_CODE" == "200" ]]; then _smoke_pass "/healthz → 200"; else _smoke_fail "/healthz → ${FETCH_CODE} (expected 200)"; fi
 
     _smoke_fetch "${base}/"
-    if [[ "$FETCH_CODE" == "200" ]] && grep -q 'id="redwood-app"' "${SMOKE_TMP}/body"; then
-        _smoke_pass "/ → 200, app shell served"
+    if [[ "$FETCH_CODE" == "200" ]] && grep -q 'id="top"' "${SMOKE_TMP}/body"; then
+        _smoke_pass "/ → 200, home page served"
     else
-        _smoke_fail "/ → ${FETCH_CODE}, app shell not found"
+        _smoke_fail "/ → ${FETCH_CODE}, home page not found"
     fi
     if _smoke_header cache-control 'no-cache'; then _smoke_pass "HTML is served with Cache-Control: no-cache"; else _smoke_fail "HTML is missing Cache-Control: no-cache"; fi
+    if grep -q 'Send message' "${SMOKE_TMP}/body"; then _smoke_pass "Enquiry form rendered"; else _smoke_fail "Enquiry form (Send message) not found in the home page"; fi
+    if _smoke_header content-security-policy ".*connect-src 'self' https://docs.google.com"; then _smoke_pass "CSP allows posting to the Google Form"; else _smoke_fail "CSP is missing connect-src https://docs.google.com"; fi
     for header in content-security-policy x-content-type-options x-frame-options referrer-policy permissions-policy; do
         if _smoke_header "$header" '.+'; then _smoke_pass "Header present: ${header}"; else _smoke_fail "Header missing: ${header}"; fi
     done
     if [[ "$base" == https://* ]]; then
         if _smoke_header strict-transport-security 'max-age='; then _smoke_pass "Header present: strict-transport-security"; else _smoke_fail "Header missing: strict-transport-security"; fi
     fi
-    asset="$(grep -oE '/assets/[^"]+\.js' "${SMOKE_TMP}/body" | head -n 1 || true)"
+    asset="$(grep -oE '/_next/static/[^"]+\.js' "${SMOKE_TMP}/body" | head -n 1 || true)"
 
     _smoke_fetch "${base}/contact"
-    if [[ "$FETCH_CODE" == "200" ]] && grep -q 'id="redwood-app"' "${SMOKE_TMP}/body"; then
-        _smoke_pass "/contact → 200 (SPA fallback)"
+    if [[ "$FETCH_CODE" == "200" ]] && grep -q 'id="contact"' "${SMOKE_TMP}/body"; then
+        _smoke_pass "/contact → 200 (static route)"
     else
-        _smoke_fail "/contact → ${FETCH_CODE} (expected the SPA fallback)"
+        _smoke_fail "/contact → ${FETCH_CODE} (expected the contact page)"
+    fi
+
+    _smoke_fetch "${base}/legal/privacy"
+    if [[ "$FETCH_CODE" == "200" ]] && grep -q 'Privacy Policy' "${SMOKE_TMP}/body"; then
+        _smoke_pass "/legal/privacy → 200 (nested static route)"
+    else
+        _smoke_fail "/legal/privacy → ${FETCH_CODE} (expected the privacy policy)"
+    fi
+
+    _smoke_fetch "${base}/"
+    photo="$(grep -oE '/okwe-image/[^" ]+\.avif' "${SMOKE_TMP}/body" | head -n 1 || true)"
+    if [[ -z "$photo" ]]; then
+        _smoke_fail "No /okwe-image/*.avif reference found in index.html"
+    else
+        _smoke_fetch "${base}${photo}"
+        if [[ "$FETCH_CODE" == "200" ]]; then _smoke_pass "${photo} → 200"; else _smoke_fail "${photo} → ${FETCH_CODE}"; fi
+        if _smoke_header cache-control '.*immutable'; then _smoke_pass "Photos cached as immutable"; else _smoke_fail "Photos are missing the immutable Cache-Control"; fi
+    fi
+
+    _smoke_fetch "${base}/this-page-does-not-exist"
+    if [[ "$FETCH_CODE" == "404" ]] && grep -q '404 Page Not Found' "${SMOKE_TMP}/body"; then
+        _smoke_pass "unknown path → 404 page"
+    else
+        _smoke_fail "unknown path → ${FETCH_CODE} (expected 404 with the not-found page)"
     fi
 
     if [[ -z "$asset" ]]; then
-        _smoke_fail "No /assets/*.js reference found in index.html"
+        _smoke_fail "No /_next/static/*.js reference found in index.html"
     else
         _smoke_fetch "${base}${asset}"
         if [[ "$FETCH_CODE" == "200" ]]; then _smoke_pass "${asset} → 200"; else _smoke_fail "${asset} → ${FETCH_CODE}"; fi

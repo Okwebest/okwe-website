@@ -3,31 +3,22 @@
 # Okwe — container images
 #
 # Targets:
-#   dev   Redwood dev server (`yarn rw dev`), source bind-mounted by docker-compose.dev.yml
-#   web   Production image: the static web build served by unprivileged nginx on :8080
+#   dev   Next.js dev server (`npm run dev`), source bind-mounted by docker-compose.dev.yml
+#   web   Production image: the static export (./out) served by unprivileged nginx on :8080
 #
 # Build via ./scripts/docker/build-push.sh (production) or ./scripts/docker/dev.sh (development).
 #
 # The Node stages run on the build machine's platform ($BUILDPLATFORM): their only
-# output is web/dist, which is plain HTML/JS/CSS. Only the final `web` stage uses the
+# output is ./out, which is plain HTML/JS/CSS. Only the final `web` stage uses the
 # target platform, so an amd64 image builds natively on ARM machines, without QEMU.
 
 # base
 # ----
-FROM --platform=$BUILDPLATFORM node:20-bookworm-slim AS base
+FROM --platform=$BUILDPLATFORM node:24-bookworm-slim AS base
 
-# openssl is required by Prisma (installed via the api workspace), as in Redwood's
-# official Dockerfile template.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    openssl \
-  && rm -rf /var/lib/apt/lists/*
-
-RUN corepack enable
-
-# COREPACK_HOME is kept outside the ~/.cache build-cache mount so the Yarn
-# release named in package.json#packageManager is stored in the image layer.
-ENV REDWOOD_DISABLE_TELEMETRY=1 \
-    COREPACK_HOME=/home/node/.corepack
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    NPM_CONFIG_UPDATE_NOTIFIER=false \
+    NPM_CONFIG_FUND=false
 
 USER node
 WORKDIR /home/node/app
@@ -36,44 +27,40 @@ WORKDIR /home/node/app
 # ----
 FROM base AS deps
 
-COPY --chown=node:node package.json yarn.lock .yarnrc.yml ./
-COPY --chown=node:node api/package.json api/
-COPY --chown=node:node web/package.json web/
+COPY --chown=node:node package.json package-lock.json ./
 
-RUN mkdir -p /home/node/.yarn/berry/index /home/node/.cache
-
-RUN --mount=type=cache,target=/home/node/.yarn/berry/cache,uid=1000,gid=1000 \
-    --mount=type=cache,target=/home/node/.cache,uid=1000,gid=1000 \
-    yarn install --immutable
+RUN --mount=type=cache,target=/home/node/.npm,uid=1000,gid=1000 \
+    npm ci --no-audit
 
 # dev
 # ---
 # The source tree is bind-mounted over /home/node/app by docker-compose.dev.yml;
-# node_modules come from this image through anonymous volumes.
+# node_modules and .next come from anonymous volumes seeded from this image.
 FROM deps AS dev
 
-# Workspace node_modules are mounted as anonymous volumes; creating them here
-# makes those volumes owned by `node` (Docker would otherwise create them as root).
-RUN mkdir -p web/node_modules api/node_modules
-
-# There is no browser in the container: stop vite from trying to open one.
-ENV BROWSER=none
+RUN mkdir -p .next
 
 EXPOSE 8910
 
-CMD ["yarn", "rw", "dev"]
+# -H 0.0.0.0 so the dev server is reachable from the host through the published port.
+CMD ["npm", "run", "dev", "--", "-H", "0.0.0.0"]
 
 # web build
 # ---------
-# The site has no prerendered routes, so the api side is not needed. If routes are
-# ever marked `prerender`, this stage must build the api first (see Redwood's
-# official `web_build_with_prerender` stage).
+# `npm run build` runs `next build` (static export to ./out) and then
+# scripts/csp-hashes.mjs, which writes docker/nginx/security-headers.conf with the
+# hashes of Next's inline bootstrap scripts. next/font downloads the brand fonts
+# here, so this stage needs network access.
 FROM deps AS web-build
 
-COPY --chown=node:node redwood.toml ./
-COPY --chown=node:node web web
+# The git revision (passed by build-push.sh) seeds Next's build id, so building
+# the same commit twice yields byte-identical output and CSP hashes.
+ARG VCS_REF=unknown
+ENV OKWE_BUILD_ID=${VCS_REF}
 
-RUN yarn rw build web --no-prerender
+COPY --chown=node:node . .
+
+RUN npm run build
 
 # web (production)
 # ----------------
@@ -87,7 +74,7 @@ ARG SOURCE_URL=""
 # The base image's source/url/licenses/maintainer labels describe nginx, not
 # this image, so they are overridden.
 LABEL org.opencontainers.image.title="okwe-web" \
-      org.opencontainers.image.description="Okwe website: static RedwoodJS web build served by nginx" \
+      org.opencontainers.image.description="Okwe website: static Next.js export served by nginx" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${VCS_REF}" \
       org.opencontainers.image.created="${BUILD_DATE}" \
@@ -97,9 +84,9 @@ LABEL org.opencontainers.image.title="okwe-web" \
       maintainer=""
 
 COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
-COPY docker/nginx/security-headers.conf /etc/nginx/snippets/security-headers.conf
+COPY --from=web-build /home/node/app/docker/nginx/security-headers.conf /etc/nginx/snippets/security-headers.conf
 # Site files are owned by root: the nginx user (101) can read but never modify them.
-COPY --from=web-build --chown=0:0 /home/node/app/web/dist /usr/share/nginx/html
+COPY --from=web-build --chown=0:0 /home/node/app/out /usr/share/nginx/html
 
 EXPOSE 8080
 
