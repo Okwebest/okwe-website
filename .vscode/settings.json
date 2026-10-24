@@ -5,13 +5,7 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   },
-  "[prisma]": {
-    "editor.formatOnSave": true
-  },
-  "tailwindCSS.classAttributes": [
-    "class",
-    "className",
-    "activeClassName",
-    "errorClassName"
-  ]
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "tailwindCSS.classAttributes": ["class", "className"],
+  "tailwindCSS.experimental.configFile": "src/app/globals.css"
 }

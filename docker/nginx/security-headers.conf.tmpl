@@ -1,0 +1,25 @@
+# Security headers, included at server level and in every location that adds headers.
+#
+# TEMPLATE: docker/nginx/security-headers.conf is generated from this file by
+# `node scripts/csp-hashes.mjs` after `next build` (it runs as part of
+# `npm run build`). Edit this template, not the generated file.
+#
+# CSP notes:
+# - script-src: Next.js static HTML carries a few small inline bootstrap scripts
+#   (React Server Components payload and chunk registration). Their SHA-256
+#   hashes are inserted in place of the placeholder below, so 'unsafe-inline' is
+#   never needed.
+#   /theme-init.js and the /_next/static chunks are covered by 'self'.
+# - style-src needs 'unsafe-inline' for React style={{...}} props, the inline
+#   <style> blocks in the status pages and next/font's @font-face rules.
+# - Fonts are self-hosted by next/font, so no third-party origin is allowed.
+# - connect-src allows exactly one third-party origin: docs.google.com, where
+#   the branded enquiry form posts its answers (the Okwe Google Form's
+#   /formResponse endpoint). Nothing may frame this site and it frames nothing.
+# HSTS is set where TLS terminates (Traefik on SecretVM, or your own proxy).
+
+add_header Content-Security-Policy "default-src 'self'; script-src 'self' __SCRIPT_HASHES__; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://docs.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'" always;
+add_header X-Content-Type-Options "nosniff" always;
+add_header X-Frame-Options "DENY" always;
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;

@@ -1,0 +1,139 @@
+/*
+ * Okwe website stylesheet.
+ *
+ * Order matters: the design-system tokens and the site rules come first and
+ * Tailwind runs WITHOUT preflight, so tokens/base.css stays the reset (as in
+ * the original build, where corePlugins.preflight was off).
+ *
+ * They are placed in a `base` cascade layer, declared before Tailwind's
+ * `utilities` layer, so a utility class (border-0, text-ink-200, …) always
+ * beats an element rule such as base.css's `a { border-bottom … }`. Unlayered
+ * CSS would win over layered utilities, which is not how the original
+ * (Tailwind v3) build behaved.
+ */
+@layer base, theme, utilities;
+
+@import '../styles/tokens/colors.css' layer(base);
+@import '../styles/tokens/typography.css' layer(base);
+@import '../styles/tokens/spacing.css' layer(base);
+@import '../styles/tokens/elevation.css' layer(base);
+@import '../styles/tokens/motion.css' layer(base);
+@import '../styles/tokens/base.css' layer(base);
+@import '../styles/site.css' layer(base);
+
+@import 'tailwindcss/theme' layer(theme);
+@import 'tailwindcss/utilities' layer(utilities);
+
+/* Tailwind v4 theme: the former web/config/tailwind.config.js. */
+@theme {
+  /* Raw scales as hex so opacity modifiers (e.g. border-bone-50/[.14]) work. */
+  --color-ink-100: #e3e9ec;
+  --color-ink-200: #c6d2d8;
+  --color-ink-300: #9cb0ba;
+  --color-ink-400: #6e8794;
+  --color-ink-500: #47606c;
+  --color-ink-600: #2c3f4a;
+  --color-ink-700: #1b2a33;
+  --color-ink-800: #101a21;
+  --color-ink-900: #0a1014;
+
+  --color-bone-50: #fbfaf6;
+  --color-bone-100: #f4f1ea;
+  --color-bone-200: #e9e4d9;
+  --color-bone-300: #d9d2c4;
+  --color-bone-400: #bfb6a4;
+
+  --color-persimmon-100: #f9e4de;
+  --color-persimmon-200: #f1c9bf;
+  --color-persimmon-400: #de6a4f;
+  --color-persimmon-500: #c8442a;
+  --color-persimmon-600: #b3391f;
+  --color-persimmon-700: #8f2b17;
+
+  --color-lagoon-100: #dcedeb;
+  --color-lagoon-300: #6fb0ab;
+  --color-lagoon-500: #1c7c77;
+  --color-lagoon-600: #125b58;
+  --color-lagoon-700: #0c3f3d;
+
+  --color-brass-200: #efe0bc;
+  --color-brass-300: #e0be72;
+  --color-brass-500: #c8952f;
+  --color-brass-600: #a87c1f;
+  --color-brass-700: #8a6317;
+
+  --color-slate-100: #dee8f2;
+  --color-slate-600: #24537f;
+
+  /* The design's single breakpoint: innerWidth < 860 is "narrow". */
+  --breakpoint-wide: 860px;
+
+  --spacing-gutter: clamp(20px, 5vw, 88px);
+
+  --tracking-label: 0.12em;
+  --tracking-eyebrow: 0.14em;
+  --tracking-tight: -0.035em;
+}
+
+/*
+ * next/font self-hosts the three brand families and exposes them as
+ * --font-newsreader / --font-public-sans / --font-plex-mono on <html>. Point
+ * the design-system tokens at them, keeping the original fallback stacks.
+ */
+/*
+ * Mode-dependent aliases. These MUST be `inline`: a plain @theme would emit
+ * `:root { --color-paper: var(--paper) }`, and var() resolves where it is
+ * declared, so every utility would get the :root (light) value even inside a
+ * data-theme="dark" section or the masthead. Inline makes the utility use
+ * var(--paper) directly, which resolves on the element, as the original
+ * Tailwind v3 config (`'paper': 'var(--paper)'`) did.
+ */
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-hi: var(--paper-hi);
+  --color-paper-lo: var(--paper-lo);
+  --color-rule: var(--rule);
+  --color-on-paper: var(--on-paper);
+  --color-on-paper-2: var(--on-paper-2);
+  --color-on-paper-3: var(--on-paper-3);
+  --color-acc-k: var(--acc-k);
+  --color-acc-c: var(--acc-c);
+  --color-acc-c2: var(--acc-c2);
+  --color-acc-m: var(--acc-m);
+  --color-acc-m2: var(--acc-m2);
+  --color-hl: var(--hl);
+  --color-ok-bg: var(--ok-bg);
+  --color-text-display: var(--text-display);
+  --color-text-body: var(--text-body);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-accent: var(--text-accent);
+  --color-text-link: var(--text-link);
+  --color-text-link-hover: var(--text-link-hover);
+  --color-surface-card: var(--surface-card);
+  --color-surface-inset: var(--surface-inset);
+  --color-border-hairline: var(--border-hairline);
+  --color-border-strong: var(--border-strong);
+  --color-interactive-bg: var(--interactive-bg);
+  --color-interactive-bg-hover: var(--interactive-bg-hover);
+  --color-interactive-fg: var(--interactive-fg);
+  --color-interactive-accent: var(--interactive-accent);
+  --color-interactive-accent-hover: var(--interactive-accent-hover);
+  --color-interactive-quiet-hover: var(--interactive-quiet-hover);
+  --color-status-danger: var(--status-danger);
+  --color-status-danger-soft: var(--status-danger-soft);
+
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+:root {
+  --font-display:
+    var(--font-newsreader), 'Newsreader', Georgia, 'Times New Roman', serif;
+  --font-sans:
+    var(--font-public-sans), 'Public Sans', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono:
+    var(--font-plex-mono), 'IBM Plex Mono', ui-monospace, 'SFMono-Regular',
+    monospace;
+}

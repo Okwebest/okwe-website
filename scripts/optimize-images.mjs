@@ -1,0 +1,182 @@
+#!/usr/bin/env node
+/**
+ * Builds the responsive photo set the site ships.
+ *
+ *   assets/images/<name>.jpeg  →  public/okwe-image/<name>.<hash>.<width>.{avif,webp,jpg}
+ *                              →  src/content/images.ts (typed manifest)
+ *
+ * Run `npm run images` after adding or replacing a photo in assets/images and
+ * commit the result. It is deliberately not part of `npm run build`: the
+ * derivatives are checked in, so production builds need no native module.
+ *
+ * File names carry a content hash so nginx can serve them with a one-year
+ * immutable cache; replacing a photo changes the name and busts the cache.
+ */
+import { createHash } from 'node:crypto'
+import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+import sharp from 'sharp'
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+const sourceDir = path.join(root, 'assets/images')
+const outDir = path.join(root, 'public/okwe-image')
+const manifestPath = path.join(root, 'src/content/images.ts')
+const publicPrefix = '/okwe-image'
+
+/** Rendered widths the site needs (CSS px × device pixel ratio). */
+const WIDTHS = [640, 960, 1280, 1920]
+
+const FORMATS = [
+  {
+    key: 'avif',
+    ext: 'avif',
+    type: 'image/avif',
+    encode: (s) => s.avif({ quality: 50, effort: 6 }),
+  },
+  {
+    key: 'webp',
+    ext: 'webp',
+    type: 'image/webp',
+    encode: (s) => s.webp({ quality: 74, effort: 6 }),
+  },
+  {
+    key: 'jpeg',
+    ext: 'jpg',
+    type: 'image/jpeg',
+    encode: (s) => s.jpeg({ quality: 78, progressive: true, mozjpeg: true }),
+  },
+]
+
+/** Manifest key and alt text per source file. Add a line when adding a photo. */
+const PHOTOS = {
+  'trade-sample-research': {
+    key: 'knows',
+    alt: 'Product samples, trade documents and market research on a desk',
+  },
+  'two-traders': {
+    key: 'coms',
+    alt: 'Two traders reviewing product samples and documents at a table',
+  },
+  'port-cranes': {
+    key: 'move',
+    alt: 'Port cranes lifting a shipping container onto a truck',
+  },
+  'market-warehouse': {
+    key: 'customers',
+    alt: 'Warehouse and port workers handling cargo and containers',
+  },
+}
+
+const toCamel = (s) => s.replace(/-([a-z])/g, (_, c) => c.toUpperCase())
+
+async function main() {
+  const sources = (await readdir(sourceDir)).filter((f) =>
+    /\.(jpe?g|png)$/i.test(f)
+  )
+  if (sources.length === 0) throw new Error(`No source images in ${sourceDir}`)
+
+  await mkdir(outDir, { recursive: true })
+  const existing = new Set(await readdir(outDir))
+  const written = new Set()
+  const manifest = {}
+
+  for (const file of sources) {
+    const name = file.replace(/\.[^.]+$/, '')
+    const meta = PHOTOS[name]
+    if (!meta) {
+      throw new Error(
+        `${file} has no entry in PHOTOS (scripts/optimize-images.mjs); add a key and alt text.`
+      )
+    }
+    const input = await readFile(path.join(sourceDir, file))
+    const hash = createHash('sha256').update(input).digest('hex').slice(0, 8)
+    const { width: srcW, height: srcH } = await sharp(input).metadata()
+    if (!srcW || !srcH) throw new Error(`Cannot read dimensions of ${file}`)
+
+    const sources = { avif: [], webp: [], jpeg: [] }
+    let totalBytes = 0
+    for (const width of WIDTHS.filter((w) => w <= srcW)) {
+      const height = Math.round((srcH / srcW) * width)
+      const base = sharp(input)
+        .rotate()
+        .resize({ width, withoutEnlargement: true })
+      for (const format of FORMATS) {
+        const outName = `${name}.${hash}.${width}.${format.ext}`
+        const outPath = path.join(outDir, outName)
+        if (!existing.has(outName)) {
+          const buffer = await format.encode(base.clone()).toBuffer()
+          await writeFile(outPath, buffer)
+          totalBytes += buffer.length
+        }
+        written.add(outName)
+        sources[format.key].push({
+          src: `${publicPrefix}/${outName}`,
+          width,
+          height,
+        })
+      }
+    }
+    const largestJpeg = sources.jpeg[sources.jpeg.length - 1]
+    manifest[meta.key] = {
+      alt: meta.alt,
+      width: largestJpeg.width,
+      height: largestJpeg.height,
+      sources,
+      fallback: sources.jpeg.find((s) => s.width === 1280) ?? largestJpeg,
+    }
+    console.log(
+      `${file} → ${sources.jpeg.length * FORMATS.length} files` +
+        (totalBytes
+          ? ` (${(totalBytes / 1024).toFixed(0)} KB new)`
+          : ' (up to date)')
+    )
+  }
+
+  // Remove derivatives that no longer correspond to a source (old hashes, removed photos).
+  for (const entry of existing) {
+    if (
+      /\.[0-9a-f]{8}\.\d+\.(avif|webp|jpg)$/.test(entry) &&
+      !written.has(entry)
+    ) {
+      await rm(path.join(outDir, entry))
+      console.log(`removed stale ${entry}`)
+    }
+  }
+
+  const keys = Object.keys(manifest).sort()
+  const lines = [
+    '/**',
+    ' * GENERATED by `npm run images` (scripts/optimize-images.mjs). Do not edit:',
+    ' * change assets/images or the PHOTOS table in the script and rerun.',
+    ' */',
+    '',
+    'export type ImageSource = { src: string; width: number; height: number }',
+    '',
+    'export type ResponsiveImage = {',
+    '  alt: string',
+    '  /** Intrinsic size of the largest derivative. */',
+    '  width: number',
+    '  height: number',
+    '  sources: { avif: ImageSource[]; webp: ImageSource[]; jpeg: ImageSource[] }',
+    '  /** The <img src> for browsers that ignore srcset. */',
+    '  fallback: ImageSource',
+    '}',
+    '',
+    'export const images = {',
+    ...keys.map(
+      (k) =>
+        `  ${toCamel(k)}: ${JSON.stringify(manifest[k], null, 2).replace(/\n/g, '\n  ')},`
+    ),
+    '} as const satisfies Record<string, ResponsiveImage>',
+    '',
+  ]
+  await writeFile(manifestPath, lines.join('\n'))
+  console.log(`manifest → ${path.relative(root, manifestPath)}`)
+}
+
+main().catch((error) => {
+  console.error(error.message)
+  process.exit(1)
+})

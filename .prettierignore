@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+package-lock.json
+
+# Design-system token files are kept verbatim
+src/styles/tokens/
+
+# Deployment files are pinned by scripts/docker/build-push.sh; leave their formatting alone
+docker-compose.prod.yml
+docker-compose.secretvm.yml
+src/content/images.ts
+assets/images/
